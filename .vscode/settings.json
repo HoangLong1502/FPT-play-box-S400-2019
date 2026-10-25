@@ -1,0 +1,10 @@
+{
+  "java.project.sourcePaths": [
+    "fpt-home/src",
+    "fpt-home/build/gen"
+  ],
+  "java.project.outputPath": "fpt-home/build/ide-classes",
+  "java.project.referencedLibraries": [
+    "C:/Users/DELL/AppData/Local/Android/Sdk/platforms/android-34/android.jar"
+  ]
+}

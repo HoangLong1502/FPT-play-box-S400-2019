@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#07080C</color>
+    <color name="card">#141820</color>
+    <color name="card_focused">#1C2536</color>
+    <color name="stroke">#00000000</color>
+    <color name="focus_stroke">#FFFFFF</color>
+    <color name="text">#F5F7FB</color>
+    <color name="muted">#8E98A8</color>
+    <color name="hint_hidden">#00000000</color>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="HomeTheme" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">@drawable/screen_bg</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

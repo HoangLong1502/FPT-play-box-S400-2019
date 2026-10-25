@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trang chủ nhẹ</string>
+    <string name="eyebrow">Trang chủ</string>
+    <string name="title">Giải trí</string>
+    <string name="subtitle">Ba ứng dụng, chọn bằng remote</string>
+    <string name="hint">Trái và phải để đổi. OK để mở. Xuống để vào cài đặt.</string>
+    <string name="settings">Cài đặt</string>
+    <string name="settings_title">Hình nền từ điện thoại</string>
+    <string name="settings_help">Điện thoại và box dùng cùng Wi-Fi. Mở địa chỉ bên dưới bằng trình duyệt của điện thoại, rồi chọn một ảnh.</string>
+    <string name="waiting_photo">Đang chờ ảnh từ điện thoại.</string>
+    <string name="photo_saved">Đã nhận ảnh. Bấm Quay lại để xem nền mới.</string>
+    <string name="default_ready">Đã trả về nền 3D. Bấm Quay lại.</string>
+    <string name="use_default">Nền 3D</string>
+    <string name="back_home">Quay lại</string>
+    <string name="no_wifi">Không thấy địa chỉ Wi-Fi của box.</string>
+    <string name="server_failed">Không mở được cổng nhận ảnh.</string>
+    <string name="open_hint">Nhấn OK</string>
+    <string name="missing">Chưa cài</string>
+</resources>
