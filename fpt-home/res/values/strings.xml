@@ -2,12 +2,12 @@
 <resources>
     <string name="app_name">Trang chủ nhẹ</string>
     <string name="eyebrow">Trang chủ</string>
-    <string name="title">Giải trí</string>
-    <string name="subtitle">Ba ứng dụng, chọn bằng remote</string>
-    <string name="hint">Trái và phải để đổi. OK để mở. Xuống để vào cài đặt.</string>
+    <string name="title">Hello Mẹ Liên</string>
+    <string name="subtitle">chọn ứng dụng bên dưới</string>
+    <string name="hint"> điều hướng xuống để vào đổi ảnh nền</string>
     <string name="settings">Cài đặt</string>
     <string name="settings_title">Hình nền từ điện thoại</string>
-    <string name="settings_help">Điện thoại và box dùng cùng Wi-Fi. Mở địa chỉ bên dưới bằng trình duyệt của điện thoại, rồi chọn một ảnh.</string>
+    <string name="settings_help">Gõ link bên dưới vào trình duyệt điện thoại. Cùng Wi-Fi với box. Không bấm link trên TV.</string>
     <string name="waiting_photo">Đang chờ ảnh từ điện thoại.</string>
     <string name="photo_saved">Đã nhận ảnh. Bấm Quay lại để xem nền mới.</string>
     <string name="default_ready">Đã trả về nền 3D. Bấm Quay lại.</string>

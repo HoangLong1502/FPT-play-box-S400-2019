@@ -55,17 +55,31 @@ public final class HomeActivity extends Activity {
                 startActivity(new Intent(HomeActivity.this, SettingsActivity.class));
             }
         });
+        PhotoServer.ensureStarted(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        PhotoServer.ensureStarted(this);
+        PhotoServer.setListener(new PhotoServer.Listener() {
+            @Override
+            public void onSaved() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        stage.setBackdrop(Backgrounds.load(HomeActivity.this));
+                    }
+                });
+            }
+        });
         stage.setBackdrop(Backgrounds.load(this));
         stage.start();
     }
 
     @Override
     protected void onPause() {
+        PhotoServer.setListener(null);
         stage.stop();
         super.onPause();
     }
