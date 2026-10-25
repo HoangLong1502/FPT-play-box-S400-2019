@@ -27,11 +27,11 @@ Ba ứng dụng này vẫn là bản có sẵn trên box. Màn hình chỉ mở 
 1. ⬇️ Trên remote, đi xuống **Cài đặt** rồi bấm ⭕ **OK**.
 2. 📺 Box hiện một địa chỉ, dạng `http://192.168.100.203:8787`. Số đầu có thể khác nếu IP của box đổi.
 3. 📱 Mở trình duyệt trên điện thoại và gõ đúng địa chỉ đó.
-4. 🖼️ Chọn một ảnh **JPG** hoặc **PNG**, rồi bấm **Đặt làm nền**. Ảnh lớn hơn 6 MB sẽ bị từ chối.
+4. 🖼️ Chọn một ảnh, rồi bấm **Đặt làm nền**. Ảnh lớn hơn 20 MB sẽ bị từ chối. iPhone để định dạng HEIC thì đổi sang JPG hoặc PNG.
 5. ↩️ Trên remote bấm **Quay lại**. Ảnh nằm phía sau các ô, có lớp tối để chữ vẫn đọc được.
 6. 🧊 Muốn bỏ ảnh và trở lại nền 3D: vào **Cài đặt**, chọn **Nền 3D**, rồi **Quay lại**.
 
-⚠️ Trang nhận ảnh chỉ mở khi màn **Cài đặt** đang hiện. Thoát màn đó là box ngừng nhận ảnh.
+Trang nhận ảnh chạy khi màn hình chính đang mở, kể cả sau khi bấm **Quay lại**. Nếu điện thoại không vào được link, bấm **🏠 Home** trên remote rồi mở lại địa chỉ.
 
 ## 🛠️ Bật chế độ nhà phát triển
 

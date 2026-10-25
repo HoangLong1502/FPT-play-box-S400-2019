@@ -33,29 +33,35 @@ final class Backgrounds {
     }
 
     static boolean save(Context context, byte[] data, int length) {
-        if (!isImage(data, length)) {
-            return false;
-        }
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         BitmapFactory.decodeByteArray(data, 0, length, bounds);
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
             return false;
         }
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
-        Bitmap decoded = BitmapFactory.decodeByteArray(data, 0, length, options);
+        Bitmap decoded;
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            options.inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight);
+            decoded = BitmapFactory.decodeByteArray(data, 0, length, options);
+        } catch (OutOfMemoryError ignored) {
+            return false;
+        }
         if (decoded == null) {
             return false;
         }
-        Bitmap output = scaleDown(decoded);
+        Bitmap output = decoded;
         FileOutputStream stream = null;
         try {
+            output = scaleDown(decoded);
             stream = new FileOutputStream(file(context));
             boolean wrote = output.compress(Bitmap.CompressFormat.JPEG, 86, stream);
             stream.flush();
             return wrote;
         } catch (Exception ignored) {
+            return false;
+        } catch (OutOfMemoryError ignored) {
             return false;
         } finally {
             if (output != decoded) {
@@ -79,20 +85,20 @@ final class Backgrounds {
         }
     }
 
-    private static boolean isImage(byte[] data, int length) {
-        if (length >= 3 && (data[0] & 0xFF) == 0xFF && (data[1] & 0xFF) == 0xD8) {
-            return true;
+    static boolean isHeif(byte[] data, int length) {
+        if (data == null || length < 12) {
+            return false;
         }
-        return length >= 8
-                && data[0] == (byte) 0x89
-                && data[1] == 0x50
-                && data[2] == 0x4E
-                && data[3] == 0x47;
+        if (data[4] != 'f' || data[5] != 't' || data[6] != 'y' || data[7] != 'p') {
+            return false;
+        }
+        String brand = new String(data, 8, 4, java.nio.charset.StandardCharsets.US_ASCII);
+        return brand.startsWith("hei") || brand.startsWith("mif") || brand.startsWith("msf") || brand.startsWith("avi");
     }
 
     private static int sampleSize(int width, int height) {
         int sample = 1;
-        while (width / sample > MAX_EDGE * 2 || height / sample > MAX_EDGE * 2) {
+        while (width / sample > MAX_EDGE || height / sample > MAX_EDGE) {
             sample *= 2;
         }
         return sample;

@@ -6,7 +6,6 @@ import android.view.View;
 import android.widget.TextView;
 
 public final class SettingsActivity extends Activity {
-    private PhotoServer server;
     private TextView status;
 
     @Override
@@ -39,9 +38,13 @@ public final class SettingsActivity extends Activity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        server = new PhotoServer(this, new PhotoServer.Listener() {
+    protected void onResume() {
+        super.onResume();
+        PhotoServer.ensureStarted(this);
+        if (PhotoServer.failure() != null) {
+            status.setText(R.string.server_failed);
+        }
+        PhotoServer.setListener(new PhotoServer.Listener() {
             @Override
             public void onSaved() {
                 runOnUiThread(new Runnable() {
@@ -52,19 +55,11 @@ public final class SettingsActivity extends Activity {
                 });
             }
         });
-        try {
-            server.start();
-        } catch (Exception ignored) {
-            status.setText(R.string.server_failed);
-        }
     }
 
     @Override
-    protected void onStop() {
-        if (server != null) {
-            server.stop();
-            server = null;
-        }
-        super.onStop();
+    protected void onPause() {
+        PhotoServer.setListener(null);
+        super.onPause();
     }
 }

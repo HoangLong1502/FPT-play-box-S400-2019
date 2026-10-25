@@ -15,28 +15,53 @@ import java.util.Enumeration;
 
 final class PhotoServer {
     static final int PORT = 8787;
-    private static final int MAX_BYTES = 6 * 1024 * 1024;
+    private static final int MAX_BYTES = 20 * 1024 * 1024;
 
     interface Listener {
         void onSaved();
     }
 
+    private static PhotoServer instance;
+    private static volatile Listener listener;
+    private static volatile String failure;
+
     private final Context context;
-    private final Listener listener;
     private volatile boolean running;
     private ServerSocket server;
     private Thread thread;
 
-    PhotoServer(Context context, Listener listener) {
+    private PhotoServer(Context context) {
         this.context = context.getApplicationContext();
-        this.listener = listener;
     }
 
-    void start() throws Exception {
+    static synchronized void ensureStarted(Context context) {
+        PhotoServer current = instance;
+        if (current != null && current.running && current.server != null && !current.server.isClosed()) {
+            return;
+        }
+        PhotoServer created = new PhotoServer(context);
+        try {
+            created.start();
+            instance = created;
+            failure = null;
+        } catch (Exception ignored) {
+            failure = "bind";
+        }
+    }
+
+    static void setListener(Listener next) {
+        listener = next;
+    }
+
+    static String failure() {
+        return failure;
+    }
+
+    private void start() throws Exception {
         stop();
         server = new ServerSocket();
         server.setReuseAddress(true);
-        server.bind(new java.net.InetSocketAddress(PORT));
+        server.bind(new java.net.InetSocketAddress(InetAddress.getByName("0.0.0.0"), PORT));
         server.setSoTimeout(700);
         running = true;
         thread = new Thread(new Runnable() {
@@ -100,7 +125,7 @@ final class PhotoServer {
             Socket client = null;
             try {
                 client = open.accept();
-                client.setSoTimeout(8000);
+                client.setSoTimeout(60000);
                 handle(client);
             } catch (Exception ignored) {
                 // Timeout or a closed socket just retries until stop().
@@ -134,12 +159,6 @@ final class PhotoServer {
             previous = value;
         }
         String header = new String(headerBytes.toByteArray(), StandardCharsets.ISO_8859_1);
-        int length = contentLength(header);
-        if (length < 0 || length > MAX_BYTES) {
-            write(client, 413, page("Ảnh quá lớn", "Chọn ảnh nhỏ hơn 6 MB."));
-            return;
-        }
-        byte[] body = readExact(input, length);
         String path = pathOf(header);
         if (header.startsWith("GET ") && "/".equals(path)) {
             write(client, 200, formPage());
@@ -149,13 +168,101 @@ final class PhotoServer {
             write(client, 404, page("Không có trang này", "Chỉ dùng địa chỉ trang chủ."));
             return;
         }
+        if (expectsContinue(header)) {
+            OutputStream output = client.getOutputStream();
+            output.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1));
+            output.flush();
+        }
+        byte[] body = readBody(input, header);
+        if (body == null) {
+            write(client, 413, page("Ảnh quá lớn", "Chọn ảnh nhỏ hơn 20 MB."));
+            return;
+        }
         byte[] image = extractImage(body, boundary(header));
+        if (image != null && Backgrounds.isHeif(image, image.length)) {
+            write(client, 400, page("Không nhận được ảnh", "iPhone đang gửi ảnh HEIC. Hãy chọn JPG hoặc PNG."));
+            return;
+        }
         if (image == null || !Backgrounds.save(context, image, image.length)) {
             write(client, 400, page("Không nhận được ảnh", "Chọn một file JPG hoặc PNG."));
             return;
         }
-        listener.onSaved();
+        Listener current = listener;
+        if (current != null) {
+            current.onSaved();
+        }
         write(client, 200, page("Đã đặt hình nền", "Quay lại TV và bấm nút Quay lại trên remote."));
+    }
+
+    private static byte[] readBody(InputStream input, String header) throws Exception {
+        if (isChunked(header)) {
+            return readChunked(input);
+        }
+        int length = contentLength(header);
+        if (length < 0 || length > MAX_BYTES) {
+            return null;
+        }
+        return readExact(input, length);
+    }
+
+    private static boolean expectsContinue(String header) {
+        String lower = header.toLowerCase();
+        return lower.contains("expect:") && lower.contains("100-continue");
+    }
+
+    private static boolean isChunked(String header) {
+        String lower = header.toLowerCase();
+        return lower.contains("transfer-encoding:") && lower.contains("chunked");
+    }
+
+    private static byte[] readChunked(InputStream input) throws Exception {
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        while (true) {
+            String line = readLine(input);
+            if (line == null) {
+                return null;
+            }
+            int semi = line.indexOf(';');
+            if (semi >= 0) {
+                line = line.substring(0, semi);
+            }
+            int size;
+            try {
+                size = Integer.parseInt(line.trim(), 16);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+            if (size < 0 || size > MAX_BYTES || body.size() > MAX_BYTES - size) {
+                return null;
+            }
+            if (size == 0) {
+                return body.toByteArray();
+            }
+            byte[] chunk = readExact(input, size);
+            if (chunk.length != size) {
+                return null;
+            }
+            body.write(chunk);
+            readExact(input, 2);
+        }
+    }
+
+    private static String readLine(InputStream input) throws Exception {
+        ByteArrayOutputStream line = new ByteArrayOutputStream();
+        int previous = -1;
+        while (line.size() < 256) {
+            int value = input.read();
+            if (value < 0) {
+                return line.size() == 0 ? null : line.toString("ISO-8859-1");
+            }
+            if (previous == '\r' && value == '\n') {
+                byte[] data = line.toByteArray();
+                return new String(data, 0, Math.max(0, data.length - 1), StandardCharsets.ISO_8859_1);
+            }
+            line.write(value);
+            previous = value;
+        }
+        return null;
     }
 
     private static byte[] extractImage(byte[] body, String boundary) {
@@ -188,9 +295,9 @@ final class PhotoServer {
 
     private static String formPage() {
         return page("Đổi hình nền TV",
-                "<p>Chọn một ảnh JPG hoặc PNG trên điện thoại.</p>"
+                "<p>Điện thoại và box phải cùng Wi-Fi. Chọn một ảnh JPG hoặc PNG, rồi bấm nút bên dưới.</p>"
                         + "<form method=\"post\" action=\"/upload\" enctype=\"multipart/form-data\">"
-                        + "<input type=\"file\" name=\"photo\" accept=\"image/jpeg,image/png\" required>"
+                        + "<input type=\"file\" name=\"photo\" accept=\"image/*\" required>"
                         + "<button type=\"submit\">Đặt làm nền</button></form>");
     }
 
@@ -200,8 +307,10 @@ final class PhotoServer {
                 + "<title>" + title + "</title><style>"
                 + "body{margin:0;background:#10131a;color:#f5f7fb;font-family:sans-serif}"
                 + "main{max-width:28rem;margin:0 auto;padding:2rem 1.2rem}"
-                + "h1{font-size:1.7rem} input,button{font-size:1.1rem}"
-                + "button{margin-top:1rem;background:#f5f7fb;color:#111;border:0;border-radius:999px;padding:.8rem 1.2rem}"
+                + "h1{font-size:1.7rem}p{line-height:1.45}"
+                + "input,button{display:block;width:100%;box-sizing:border-box;font-size:1.15rem}"
+                + "input{margin:1.2rem 0;padding:.9rem;background:#1c2536;color:#f5f7fb;border-radius:12px}"
+                + "button{background:#f5f7fb;color:#111;border:0;border-radius:999px;padding:.9rem 1.2rem}"
                 + "</style></head><body><main><h1>" + title + "</h1>" + body + "</main></body></html>";
     }
 
